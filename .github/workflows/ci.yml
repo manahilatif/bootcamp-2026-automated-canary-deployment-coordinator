@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: ["manahil-atif/automated-canary-deployment-coordinator"]
   pull_request:
     branches: ["main"]
 
