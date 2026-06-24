@@ -5,6 +5,8 @@ import rollout
 import abort
 
 def run_deployment():
+    abort.reset_abort()
+    
     cluster_module.initialize_cluster()
     abort.start_abort_listener()
     
