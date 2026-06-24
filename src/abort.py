@@ -6,7 +6,11 @@ abort_flag = threading.Event()
 
 def listen_for_abort():
     while True:
-        user_input = input()
+        try:
+            user_input = input()
+        except EOFError:
+            logging.info("stdin closed; abort listener exiting")
+            break
         if user_input.strip().upper() == "ABORT":
             logging.warning("ABORT received — stopping rollout...")
             abort_flag.set()

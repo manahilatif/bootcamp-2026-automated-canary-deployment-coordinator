@@ -1,7 +1,6 @@
 import random
 import math
 import logging
-from datetime import datetime
 import config
 import cluster as cluster_module
 

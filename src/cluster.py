@@ -26,7 +26,7 @@ def print_cluster_state():
     for version, count in version_counts.items():
         print(f"  {version}: {count} servers")
 
-    status_counts = {}        # ← this line must exist
+    status_counts = {}
     for server in cluster:
         s = server["status"]
         status_counts[s] = status_counts.get(s, 0) + 1
