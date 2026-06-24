@@ -32,3 +32,6 @@ def interruptible_sleep(seconds):
 
 def is_aborted():
     return abort_flag.is_set()
+
+def reset_abort():
+    abort_flag.clear()
