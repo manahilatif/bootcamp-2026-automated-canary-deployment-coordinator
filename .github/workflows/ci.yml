@@ -2,8 +2,12 @@ name: CI
 
 on:
   push:
+    branches: ["manahil-atif/automated-canary-deployment-coordinator"]
   pull_request:
     branches: ["main"]
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -12,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v4

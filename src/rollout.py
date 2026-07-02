@@ -19,7 +19,6 @@ def update_servers(percentage):
     logging.info(f"Updating {count} servers ({int(percentage * 100)}% of eligible)...")
     
     for server in to_update:
-        server["status"] = "updating"
         server["version"] = config.NEW_VERSION
         server["status"] = "healthy"
         logging.info(f"  Server {server['id']} → {config.NEW_VERSION}")
