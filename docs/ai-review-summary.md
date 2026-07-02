@@ -33,7 +33,7 @@ Four findings were identified across security and functional correctness.
 **Fix:** Added `permissions: contents: read` and `persist-credentials: false`
 to the checkout step.
 
-### Finding 2: Workflow actions not pinned (Major — Fixed)
+### Finding 2: Workflow actions not pinned (Major — Acknowledged)
 **Issue:** `actions/checkout@v3` and `actions/setup-python@v4` should be
 pinned to immutable SHAs and updated to current supported versions.
 **Fix:** Added explicit permissions block and persist-credentials to reduce
