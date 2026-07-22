@@ -9,7 +9,6 @@ import logging
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-import activities
 from workflow import CanaryRolloutWorkflow
 
 TASK_QUEUE = "canary-rollout-queue"
@@ -17,6 +16,10 @@ TASK_QUEUE = "canary-rollout-queue"
 
 async def main():
     logging.basicConfig(level=logging.INFO)
+
+    # Import after logging config so rollout.py's import-time logging.basicConfig()
+    # does not prevent this Worker process from configuring logging.
+    import activities
 
     # Connected once, here, for the lifetime of this Worker process —
     # not reconnected per task. (Flagged in an earlier peer review as a
