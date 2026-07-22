@@ -1,9 +1,7 @@
 """
 Worker process. Run this in its own terminal and leave it running —
 it polls the task queue and executes both the Workflow and its Activities.
-
-    python worker.py
-"""
+    python src/worker.py
 
 import asyncio
 import logging
