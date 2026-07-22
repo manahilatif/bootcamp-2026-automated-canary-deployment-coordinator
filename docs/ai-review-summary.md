@@ -56,3 +56,10 @@ Acknowledged and documented in `docs/architecture.md`.
 Both AI tools reviewed the codebase. Three findings were fixed. One finding
 was acknowledged as an intentional design decision. No critical blocking
 issues remain.
+
+## Addendum: Temporal Integration (Not Yet AI-Reviewed)
+The four files added for the Temporal integration —`activities.py`,
+`workflow.py`, `worker.py`, `starter.py` — were written after the AI
+reviews above were completed and have not yet been run through Copilot
+or CodeRabbit. This is disclosed rather than omitted. A follow-up AI
+review pass on these files is a known outstanding item.
