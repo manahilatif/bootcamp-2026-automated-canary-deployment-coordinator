@@ -1,8 +1,5 @@
 """
-Starter script. With worker.py running in another terminal:
-
-    python starter.py
-
+    python src/starter.py
 Triggers one Workflow Execution and blocks until it finishes.
 """
 
