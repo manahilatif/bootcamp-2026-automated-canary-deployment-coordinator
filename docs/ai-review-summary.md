@@ -53,9 +53,10 @@ servers at each stage, not the total cluster. This matches the project spec.
 Acknowledged and documented in `docs/architecture.md`.
 
 ## Conclusion
-Both AI tools reviewed the codebase. Three findings were fixed. One finding
-was acknowledged as an intentional design decision. No critical blocking
-issues remain.
+Both AI tools reviewed the pre-Temporal codebase. Three findings were fixed.
+One finding was acknowledged as an intentional design decision. No critical
+blocking issues remained at that point in the project. See the addendum
+below for the separate, later Temporal integration review.
 
 ## Addendum: Temporal Integration (Not Yet AI-Reviewed)
 The four files added for the Temporal integration —`activities.py`,

@@ -107,17 +107,29 @@ is not caught until after that function returns.
 All cluster state exists in memory. A process crash at any point leaves
 the cluster in whatever state it was in with no recovery path.
 
-### Temporal path: no Signal-based abort, and cluster state is not durable
+### Temporal path: no Signal-based abort; cluster state durability is History-backed, not database-backed
+The Temporal integration makes both the Workflow's orchestration *and* the
+cluster data itself crash-recoverable, but only up to a specific boundary.
+Cluster state is passed explicitly as Activity input and output (see
+`activities.py`) rather than left as a bare Python global. Because
+Temporal records every Activity's input and output in Event History,
+replaying that history after a Worker crash reconstructs the correct
+cluster state deterministically — no external database required.
 
-The Temporal integration makes the *Workflow's orchestration* crash-
-recoverable — if the Worker process restarts, Temporal replays the Event
-History to resume from the last completed Activity. However, `cluster.py`'s
-server list is a plain Python global living in the Worker process's memory,
-not something Temporal persists. If the Worker crashes, the Workflow
-orchestration can resume, but the actual cluster data itself is lost —
-same underlying fragility as the original design, just relocated to the
-Worker process instead of the whole script. A production version would
-need the Activities to read/write cluster state from a real datastore.
+This has a real limit: it only protects state at Activity *boundaries*.
+A crash mid-Activity (before that Activity returns) loses that Activity's
+in-progress work. Since retries are disabled (`maximum_attempts=1`) to
+avoid double-applying updates or re-rolling `analyze()`'s randomness, a
+mid-Activity crash causes the Workflow to fail loudly with an Activity
+error rather than resume with corrupted or duplicated state. This is
+considered acceptable behavior for this project — fail visibly rather
+than silently corrupt — but it means "durable" here means "durable
+between completed steps," not "durable at every instant," which a real
+external datastore with transactional writes could provide instead.
+
+Signal-based ABORT handling is still not implemented (see TODO in
+`workflow.py`); this remains a separate, undocumented-in-code gap pending
+future coursework.
 
 ## Design Decisions
 Sleep durations are configurable via `config.py` so local testing uses
