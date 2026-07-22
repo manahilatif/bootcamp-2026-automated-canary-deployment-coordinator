@@ -14,6 +14,7 @@ below. This is a known, documented gap, not an oversight.
 from datetime import timedelta
 
 from temporalio import workflow
+from temporalio.common import RetryPolicy
 
 # Activities (and config, which is pure data with no side effects) are
 # imported through this pass-through block so Temporal's workflow sandbox
@@ -30,6 +31,7 @@ with workflow.unsafe.imports_passed_through():
     )
 
 ACTIVITY_TIMEOUT = timedelta(seconds=10)
+NO_RETRY_POLICY = RetryPolicy(maximum_attempts=1)
 
 
 @workflow.defn
@@ -45,6 +47,7 @@ class CanaryRolloutWorkflow:
         await workflow.execute_activity(
             initialize_cluster_activity,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
+            retry_policy=NO_RETRY_POLICY,
         )
 
         # --- Stage 1: 10% ---
@@ -52,17 +55,20 @@ class CanaryRolloutWorkflow:
             update_servers_activity,
             config.STAGE_1_PERCENT,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
+            retry_policy=NO_RETRY_POLICY,
         )
         await workflow.sleep(timedelta(seconds=config.SLEEP_STAGE_1))
 
         passed = await workflow.execute_activity(
             analyze_activity,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
+            retry_policy=NO_RETRY_POLICY,
         )
         if not passed:
             await workflow.execute_activity(
                 rollback_activity,
                 start_to_close_timeout=ACTIVITY_TIMEOUT,
+                retry_policy=NO_RETRY_POLICY,
             )
             return "ROLLED BACK after Stage 1 analysis"
 
@@ -71,17 +77,20 @@ class CanaryRolloutWorkflow:
             update_servers_activity,
             config.STAGE_2_PERCENT,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
+            retry_policy=NO_RETRY_POLICY,
         )
         await workflow.sleep(timedelta(seconds=config.SLEEP_STAGE_2))
 
         passed = await workflow.execute_activity(
             analyze_activity,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
+            retry_policy=NO_RETRY_POLICY,
         )
         if not passed:
             await workflow.execute_activity(
                 rollback_activity,
                 start_to_close_timeout=ACTIVITY_TIMEOUT,
+                retry_policy=NO_RETRY_POLICY,
             )
             return "ROLLED BACK after Stage 2 analysis"
 
@@ -90,6 +99,7 @@ class CanaryRolloutWorkflow:
             update_servers_activity,
             1.0,
             start_to_close_timeout=ACTIVITY_TIMEOUT,
+            retry_policy=NO_RETRY_POLICY,
         )
 
         return "DEPLOYMENT COMPLETE"
