@@ -14,15 +14,25 @@ import rollout
 
 
 @activity.defn
-async def initialize_cluster_activity() -> None:
+def initialize_cluster_activity() -> None:
     cluster_module.initialize_cluster()
     cluster_module.print_cluster_state()
 
 
 @activity.defn
-async def update_servers_activity(percentage: float) -> int:
+def update_servers_activity(percentage: float) -> int:
     updated = rollout.update_servers(percentage)
     return len(updated)
+
+
+@activity.defn
+def analyze_activity() -> bool:
+    return rollout.analyze()
+
+
+@activity.defn
+def rollback_activity() -> None:
+    rollout.rollback()
 
 
 @activity.defn
