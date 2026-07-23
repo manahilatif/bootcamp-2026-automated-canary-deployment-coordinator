@@ -49,3 +49,28 @@ intentionally omits persistence to demonstrate what happens without it.
 
 ### Evidence
 See `screenshots/failure-crash.png`
+
+## Temporal Integration: What Changes and What Doesn't
+
+The Temporal-orchestrated path (`worker.py` + `starter.py`) demonstrates
+the same rollback logic under durable execution, visible in the Temporal
+Web UI's Event History rather than console logs alone.
+
+**What Temporal fixes:** Workflow orchestration itself survives a Worker
+crash — Temporal's History Replay can resume a Workflow from its last
+completed Activity, something the original in-memory design (Failure Mode
+2) has no equivalent for at the orchestration level.
+
+**What Temporal does not fix here:** the abort race condition (Failure
+Mode 1) is not solved — it's absent. The Temporal path has no ABORT
+capability at all yet, since Signal-based interrupts haven't been
+implemented (see `docs/architecture.md`). And cluster state itself (the
+actual server list, as opposed to the Workflow's control flow) is still
+an unpersisted Python global — a Worker crash still loses that data, even
+though the Workflow orchestration around it could theoretically resume.
+
+### Evidence
+See `screenshots/` for two Web UI captures: one Workflow Execution that
+completed successfully, and one that rolled back after a failed Stage 2
+analysis (`ROLLED BACK after Stage 2 analysis`), showing both outcome
+paths under real Temporal execution.

@@ -46,6 +46,41 @@ Orchestrator. Calls functions from other modules in the correct sequence.
 Contains no business logic itself. Checks the abort flag after every stage
 and sleep, triggering rollback and early exit if set.
 
+### Temporal Integration Layer
+
+Four additional files (`activities.py`, `workflow.py`, `worker.py`,
+`starter.py`) wrap the existing modules in a Temporal-orchestrated
+execution path, run separately from `main.py`.
+
+**Mapping:**
+- `CanaryRolloutWorkflow` (`workflow.py`) — orchestrates the same stage
+  sequence as `main.py`, but as a durable Workflow. Contains no I/O, no
+  randomness, and no direct calls to `rollout.py`/`cluster.py` — only calls
+  to Activities and `workflow.sleep()`.
+- `activities.py` — each existing function is wrapped as a Temporal
+  Activity: `initialize_cluster_activity`, `update_servers_activity`,
+  `analyze_activity`, `rollback_activity`. Activities are where
+  non-deterministic and I/O-bound work is permitted, which is why
+  `analyze()`'s use of `random.random()` is safe here even though it would
+  violate Workflow determinism if called directly from `workflow.py`.
+- `worker.py` — connects once to the local Temporal server and polls the
+  `canary-rollout-queue` task queue, executing both the Workflow and its
+  Activities.
+- `starter.py` — triggers one Workflow Execution per run and blocks until
+  the result is available.
+
+**Why this matters:** Temporal requires Workflow code to be deterministic
+because it uses History Replay to reconstruct execution state after a
+Worker crash. This is a hard SDK constraint, not a style preference —
+`analyze()` had to move into an Activity for that reason alone.
+
+**Known gap:** the original ABORT mechanism (`abort.py`) is not yet
+implemented in the Temporal path. In Temporal, external interrupts are
+handled via Signals, which have not yet been covered in this project's
+Temporal coursework. `workflow.py` contains an explicit TODO marking this.
+The Temporal-orchestrated deployment currently runs to completion or rolls
+back based on `analyze()` results only, with no external abort path.
+
 ## Deployment Sequence
 initialize cluster (20 servers on v1.0.0)
 reset abort flag
@@ -71,6 +106,30 @@ is not caught until after that function returns.
 ### No state persistence
 All cluster state exists in memory. A process crash at any point leaves
 the cluster in whatever state it was in with no recovery path.
+
+### Temporal path: no Signal-based abort; cluster state durability is History-backed, not database-backed
+The Temporal integration makes both the Workflow's orchestration *and* the
+cluster data itself crash-recoverable, but only up to a specific boundary.
+Cluster state is passed explicitly as Activity input and output (see
+`activities.py`) rather than left as a bare Python global. Because
+Temporal records every Activity's input and output in Event History,
+replaying that history after a Worker crash reconstructs the correct
+cluster state deterministically — no external database required.
+
+This has a real limit: it only protects state at Activity *boundaries*.
+A crash mid-Activity (before that Activity returns) loses that Activity's
+in-progress work. Since retries are disabled (`maximum_attempts=1`) to
+avoid double-applying updates or re-rolling `analyze()`'s randomness, a
+mid-Activity crash causes the Workflow to fail loudly with an Activity
+error rather than resume with corrupted or duplicated state. This is
+considered acceptable behavior for this project — fail visibly rather
+than silently corrupt — but it means "durable" here means "durable
+between completed steps," not "durable at every instant," which a real
+external datastore with transactional writes could provide instead.
+
+Signal-based ABORT handling is still not implemented (see TODO in
+`workflow.py`); this remains a separate, undocumented-in-code gap pending
+future coursework.
 
 ## Design Decisions
 Sleep durations are configurable via `config.py` so local testing uses
